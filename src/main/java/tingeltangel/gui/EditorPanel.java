@@ -19,10 +19,7 @@
 
 package tingeltangel.gui;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.GridLayout;
-import java.awt.Insets;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -36,7 +33,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -56,6 +56,7 @@ import org.apache.log4j.Logger;
 import tingeltangel.core.Book;
 import tingeltangel.core.Entry;
 import tingeltangel.core.MP3Player;
+import tingeltangel.core.SortedIntList;
 import tingeltangel.tools.Callback;
 import tingeltangel.tools.FileEnvironment;
 import tingeltangel.tools.Progress;
@@ -114,7 +115,18 @@ public final class EditorPanel extends JPanel {
     public JPanel getList() {
         return list;
     }
-    
+
+    private PaginationPanel paginationPanel;
+    private SearchPanel searchPanel;
+
+    public PaginationPanel getPaginationPanel() {
+        return paginationPanel;
+    }
+
+    public SearchPanel getSearchPanel() {
+        return searchPanel;
+    }
+
     public EditorPanel(final EditorFrame mainFrame) {
         super();
         
@@ -324,12 +336,18 @@ public final class EditorPanel extends JPanel {
         add(jScrollPane, BorderLayout.CENTER);
         JPanel container = new JPanel();
         container.setLayout(new BorderLayout());
-        container.add(new SearchPanel(mainFrame, this), BorderLayout.NORTH);
+        this.searchPanel = new SearchPanel(mainFrame, this);
+        container.add(searchPanel, BorderLayout.NORTH);
         container.add(jScrollPane, BorderLayout.CENTER);
+        paginationPanel = new PaginationPanel(mainFrame, this);
+        container.add(paginationPanel, BorderLayout.SOUTH);
         add(container, BorderLayout.CENTER);
         add(right, BorderLayout.EAST);
 
         updateList(null);
+
+
+
         
         
         
@@ -540,6 +558,7 @@ public final class EditorPanel extends JPanel {
         }
         
         enableListeners(true);
+        this.paginationPanel.refresh();
     }
     
     
@@ -557,31 +576,65 @@ public final class EditorPanel extends JPanel {
             book.setMagicValue(Long.parseLong(magicValue.getText()));
         } catch(NumberFormatException nfe) {
         }
+        book.setPageNumber(1);
+        book.setPageSize(10);
+        this.paginationPanel.refresh();
     }
+
     protected void updateList(ProgressDialog progress) {
-        
-        
+        int pageSize = mainFrame.getBook().getPageSize();
+        int pageNumber = this.getBook().getPageNumber();
         Book book = mainFrame.getBook();
-                
-        list.removeAll();
-        
-        if(progress != null) {
-            progress.setMax(book.getSize());
+        SortedIntList filter = searchPanel.getFilterList();
+
+        log.info("Page Size " + pageSize);
+        log.info("Page number " + pageNumber);
+
+        if(pageSize == 0) {
+            pageSize = mainFrame.getBook().getSize();
         }
-        
-        for(int i = 0; i < book.getSize(); i++) {
+
+        if (pageNumber < 1) {
+            pageNumber = 1;
+        }
+
+        if (filter == null) {
+            filter = book.getIndexIDs();
+        }
+
+
+        int from = (pageNumber - 1) * pageSize;
+        int to = pageNumber * pageSize;
+
+        if (to > filter.size()) {
+            to = filter.size();
+        }
+
+        log.info("From " + from);
+
+        if (progress != null) {
+            progress.setMax(to);
+        }
+
+        list.removeAll();
+        HashMap<Integer, Entry> entries = book.getIndexEntries();
+        entries.get(1);
+
+        for(int i = from; i < to; i++) {
             if(progress != null) {
-                progress.setVal(i);
+                progress.setVal(i - to );
             }
-            list.add(new IndexListEntry(book.getEntry(i), this));
+            Entry entry = entries.get(filter.get(i));
+            IndexListEntry indexListEntry =new IndexListEntry(entry, this);
+            list.add(indexListEntry, this);
         }
         
         if(progress != null) {
             progress.done();
         }
-        
+
         Dimension size = mainFrame.getSize();
-        
+        mainFrame.setPreferredSize(size);
         mainFrame.pack();
         mainFrame.setSize(size);
     }

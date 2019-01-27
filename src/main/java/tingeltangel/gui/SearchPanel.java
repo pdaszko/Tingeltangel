@@ -12,6 +12,7 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 import tingeltangel.core.Entry;
+import tingeltangel.core.SortedIntList;
 
 public class SearchPanel extends JPanel {
 
@@ -40,6 +41,11 @@ public class SearchPanel extends JPanel {
     private JButton search = new JButton(SEARCH_LABEL);
     private JButton clear = new JButton(CLEAR_LABEL);
 
+    private SortedIntList filterList;
+
+    public SortedIntList getFilterList() {
+        return filterList;
+    }
 
     Border border = BorderFactory.createTitledBorder(SEARCH_LABEL);
     public SearchPanel(final EditorFrame mainFrame, final EditorPanel editorPanel) {
@@ -111,15 +117,17 @@ public class SearchPanel extends JPanel {
                         .setBorder(
                                 BorderFactory.createTitledBorder(SEARCH_RESULTS_LABEL + filter.size()));
 
-                for (Entry entry : filter) {
-                    editorPanel.getList().add(new IndexListEntry(entry, editorPanel));
+                filterList = new SortedIntList();
+
+                for(Entry entry : filter) {
+                    filterList.add(entry.getTingID());
                 }
 
-                Dimension size = mainFrame.getSize();
+                editorPanel.updateList(null);
 
-                mainFrame.pack();
-                mainFrame.setSize(size);
                 log.info(result);
+                editorPanel.getPaginationPanel().refresh();
+
             }
         });
 
@@ -132,21 +140,10 @@ public class SearchPanel extends JPanel {
                 name.setText("");
                 id.setText("");
                 type.setSelectedIndex(0);
-                editorPanel.getList().removeAll();
+                filterList = null;
+                editorPanel.updateList(null);
+                editorPanel.getPaginationPanel().refresh();
 
-                editorPanel.getList()
-                        .setBorder(
-                                BorderFactory.createTitledBorder(SEARCH_RESULTS_LABEL
-                                        + mainFrame.getBook().getIndexEntries().size()));
-
-                for (Entry entry : mainFrame.getBook().getIndexEntries().values()) {
-                    editorPanel.getList().add(new IndexListEntry(entry, editorPanel));
-                }
-
-                Dimension size = mainFrame.getSize();
-
-                mainFrame.pack();
-                mainFrame.setSize(size);
             }
         });
         this.add(this.clear);

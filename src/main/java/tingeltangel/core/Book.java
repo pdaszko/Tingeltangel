@@ -82,6 +82,9 @@ public class Book {
     private String author;
     private int version;
     private String url;
+
+    private int pageNumber = 1;
+    private int pageSize = 10;
     
     private long date = new Date().getTime() / 1000;
     private long magicValue = DEFAULT_MAGIC_VALUE;
@@ -103,6 +106,8 @@ public class Book {
         date = new Date().getTime() / 1000;
         constants = new Constants();
         magicValue = DEFAULT_MAGIC_VALUE;
+        pageNumber = 1;
+        pageSize = 10;
     }
     
     public File getCover() {
@@ -138,7 +143,27 @@ public class Book {
         Codes.drawBooklet(name, id, booklet, out);
     }
     */
-    
+
+    public SortedIntList getIndexIDs() {
+        return indexIDs;
+    }
+
+    public int getPageNumber() {
+        return pageNumber;
+    }
+
+    public int getPageSize() {
+        return pageSize;
+    }
+
+    public void setPageNumber(int pageNumber) {
+        this.pageNumber = pageNumber;
+    }
+
+    public void setPageSize(int pageSize) {
+        this.pageSize = pageSize;
+    }
+
     public long getMagicValue() {
         return(magicValue);
     }
@@ -253,13 +278,13 @@ public class Book {
         Iterator<Entry> i = indexEntries.values().iterator();
         while(i.hasNext()) {
             Entry e = i.next();
-            if(e.getName().equals(name)) {
-                return(e);
+            if (e.getName().equals(name)) {
+                return (e);
             }
         }
-        return(null);
+        return null;
     }
-    
+
     public boolean entryForTingIDExists(int tingID) {
         return(indexEntries.get(tingID) != null);
     }

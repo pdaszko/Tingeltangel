@@ -34,13 +34,7 @@ import java.io.PrintWriter;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -70,6 +64,7 @@ public class Book {
     
     
     private SortedIntList indexIDs = new SortedIntList();
+    private ArrayList<Entry> selectedEntries = new ArrayList<>();
     private HashMap<Integer, Entry> indexEntries = new HashMap<Integer, Entry>();
         
     private Constants constants = new Constants();
@@ -88,8 +83,7 @@ public class Book {
     
     private long date = new Date().getTime() / 1000;
     private long magicValue = DEFAULT_MAGIC_VALUE;
-    
-    
+
     private final Emulator emulator;
     
     private final static Logger log = LogManager.getLogger(Book.class);
@@ -102,6 +96,7 @@ public class Book {
         url = "";
         indexIDs = new SortedIntList();
         indexEntries = new HashMap<Integer, Entry>();
+        selectedEntries = new ArrayList<>();
         changed = false;
         date = new Date().getTime() / 1000;
         constants = new Constants();
@@ -109,7 +104,22 @@ public class Book {
         pageNumber = 1;
         pageSize = 10;
     }
-    
+    public final void addSelectedEntry(Entry entry){
+        selectedEntries.add(entry);
+    }
+
+    public final void clearSelectedEntries() {
+        selectedEntries = new ArrayList<>();
+    }
+
+    public final boolean isSelectedEntry(Entry entry) {
+        return selectedEntries.contains(entry);
+    }
+
+    public final void removeSelection(Integer key) {
+        selectedEntries.remove(key);
+    }
+
     public File getCover() {
         return(new File(FileEnvironment.getBookDirectory(id), "cover.png"));
     }
@@ -162,6 +172,10 @@ public class Book {
 
     public void setPageSize(int pageSize) {
         this.pageSize = pageSize;
+    }
+
+    public final ArrayList<Entry> getSelectedEntries(){
+        return selectedEntries;
     }
 
     public long getMagicValue() {
@@ -288,8 +302,17 @@ public class Book {
     public boolean entryForTingIDExists(int tingID) {
         return(indexEntries.get(tingID) != null);
     }
-    
-    
+
+    public Entry getEntryByTingID(int tingID){
+        for (int key : this.indexEntries.keySet()) {
+            if (this.indexEntries.get(key).getTingID() == tingID) {
+                return this.indexEntries.get(key);
+            }
+        }
+
+        return null;
+    }
+
     public int getID() {
         return(id);
     }
@@ -1151,5 +1174,29 @@ public class Book {
             return(f.delete());
         }
         return(false);
+    }
+
+    public boolean isMp3FileInBook(String fileName) {
+        for (Integer key : this.indexEntries.keySet()) {
+            File tmp = this.indexEntries.get(key).getMP3();
+            if (tmp != null) {
+                if (tmp.getName().equals(fileName)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public Integer getNextFreeKey() {
+        int nextKey = 15000;
+        for(int key : this.indexEntries.keySet()){
+            int tmp = this.indexEntries.get(key).getTingID();
+            if (nextKey < this.indexEntries.get(key).getTingID()) {
+                nextKey = tmp;
+            }
+        }
+
+        return ++nextKey;
     }
 }

@@ -25,8 +25,10 @@ import javax.imageio.metadata.IIOMetadataNode;
 import javax.imageio.stream.ImageOutputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Iterator;
 import tingeltangel.gui.CodePreferences;
 
@@ -266,6 +268,99 @@ public class Codes {
      */
     public static void drawPng(int code, int width, int height, OutputStream out) throws IOException {
         writePng(generateCodeImage(code, width, height), out);
+    }
+
+    public static void drawCodes(Integer[] codes, int width, int height, int marginVertical, int marginHorizontal, String file) throws IOException {
+        ArrayList<BufferedImage> images = generateA4View(codes, width, height, marginVertical, marginHorizontal);
+        String suffix = "";
+        int file_number = 1;
+        for (BufferedImage image: images) {
+            FileOutputStream out = new FileOutputStream(file + suffix + ".png");
+            writePng(image, out);
+            out.close();
+            suffix = "_" + file_number;
+            file_number++;
+        }
+    }
+
+
+    public static int convertMilimitersToPixels(int milimiter) {
+        milimiter *= PNG_PIXEL_PER_MM[resolution];
+        return milimiter;
+    }
+
+
+    public static ArrayList<BufferedImage> generateA4View(Integer[] codes, int width, int height,
+                                                          int marginVertical, int marginHorizontal){
+        int a4Width = convertMilimitersToPixels(209);
+        int a4Height = convertMilimitersToPixels(297);
+        int spaceVertical = convertMilimitersToPixels(marginVertical);
+        int spaceHorizontal = convertMilimitersToPixels(marginHorizontal);
+        int currentVerticalPosition = spaceVertical;
+        int currentHorizontalPosition = spaceHorizontal;
+        int columnMaxHeight = 0;
+        ArrayList<BufferedImage> pages = new ArrayList<BufferedImage>();
+        BufferedImage a4Image = new BufferedImage(a4Width, a4Height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = a4Image.createGraphics();
+        for (Integer key: codes) {
+            BufferedImage tmp = generateCodeImage(key, width, height);
+            int newHorizontalPosition = currentHorizontalPosition + spaceVertical + tmp.getHeight() +  spaceVertical;
+            int newVerticalPosition = currentVerticalPosition  + spaceHorizontal + tmp.getWidth() + spaceHorizontal;
+            //case when we still have a space to add image in the same column
+            if (newHorizontalPosition < a4Width
+                    && newVerticalPosition < a4Height) {
+                g2d.drawImage(tmp, currentHorizontalPosition, currentVerticalPosition, null);
+                currentHorizontalPosition += tmp.getWidth() + spaceHorizontal;
+                currentVerticalPosition = currentVerticalPosition;
+                if (tmp.getHeight() > columnMaxHeight) {
+                    columnMaxHeight = tmp.getHeight();
+                }
+            }
+            //case when the height is not enough but we can go to next column on the same page - > next column
+            else if(newHorizontalPosition >= a4Width
+                    && newVerticalPosition < a4Height) {
+                currentVerticalPosition += columnMaxHeight + spaceVertical;
+                currentHorizontalPosition = spaceHorizontal;
+                columnMaxHeight = tmp.getHeight();
+                g2d.drawImage(tmp, currentHorizontalPosition, currentVerticalPosition, null);
+
+
+                currentVerticalPosition = currentVerticalPosition;
+                currentHorizontalPosition += tmp.getWidth() + spaceHorizontal;
+
+            }
+            //case when width is OK but we do not have height -> we go to next page
+            else if (newHorizontalPosition < a4Width
+                    && newVerticalPosition >= a4Height) {
+                currentVerticalPosition = spaceVertical;
+                currentHorizontalPosition = spaceHorizontal;
+                columnMaxHeight = tmp.getHeight();
+
+                g2d.dispose();
+                pages.add(a4Image);
+                a4Image = new BufferedImage(a4Width, a4Height, BufferedImage.TYPE_INT_ARGB);
+                g2d = a4Image.createGraphics();
+                g2d.drawImage(tmp, currentHorizontalPosition, currentVerticalPosition, null);
+            } else if (newHorizontalPosition >= a4Width
+                    && newVerticalPosition >= a4Height) {
+                currentVerticalPosition = spaceVertical;
+                currentHorizontalPosition = spaceHorizontal;
+                columnMaxHeight = tmp.getHeight();
+
+                g2d.dispose();
+                pages.add(a4Image);
+                a4Image = new BufferedImage(a4Width, a4Height, BufferedImage.TYPE_INT_ARGB);
+                g2d = a4Image.createGraphics();
+                g2d.drawImage(tmp, currentHorizontalPosition, currentVerticalPosition, null);
+            }
+
+        }
+
+        g2d.dispose();
+        if(!pages.contains(a4Image)){
+            pages.add(a4Image);
+        }
+        return pages;
     }
     
 

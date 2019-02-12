@@ -4,6 +4,7 @@ import tingeltangel.core.Book;
 import tingeltangel.core.SortedIntList;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -18,7 +19,10 @@ public class PaginationPanel extends JPanel{
     private EditorFrame mainFrame;
     private EditorPanel editorPanel;
 
+    Border border = BorderFactory.createTitledBorder("Pagination");
+
     public PaginationPanel(final EditorFrame mainFrame, final EditorPanel editorPanel) {
+        this.setBorder(border);
         this.mainFrame = mainFrame;
         this.editorPanel = editorPanel;
         this.add(prev);

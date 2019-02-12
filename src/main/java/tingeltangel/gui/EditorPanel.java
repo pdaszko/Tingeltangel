@@ -334,13 +334,19 @@ public final class EditorPanel extends JPanel {
         jScrollPane = new JScrollPane(list);
         jScrollPane.getVerticalScrollBar().setUnitIncrement(16);
         add(jScrollPane, BorderLayout.CENTER);
+        JPanel containerSouth = new JPanel();
+        containerSouth.setLayout(new BorderLayout());
+        paginationPanel = new PaginationPanel(mainFrame, this);
+        containerSouth.add(paginationPanel, BorderLayout.EAST, -1);
+        containerSouth.add(new GroupOperations(mainFrame, this), BorderLayout.WEST, -1);
+
+
         JPanel container = new JPanel();
         container.setLayout(new BorderLayout());
         this.searchPanel = new SearchPanel(mainFrame, this);
         container.add(searchPanel, BorderLayout.NORTH);
         container.add(jScrollPane, BorderLayout.CENTER);
-        paginationPanel = new PaginationPanel(mainFrame, this);
-        container.add(paginationPanel, BorderLayout.SOUTH);
+        container.add(containerSouth, BorderLayout.SOUTH);
         add(container, BorderLayout.CENTER);
         add(right, BorderLayout.EAST);
 
